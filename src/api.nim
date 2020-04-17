@@ -54,6 +54,9 @@ const
   pcOther* = PluginCrash(9)
   pcUser* = PluginCrash(0x100)
 
+template toId*(idx: int): untyped =
+  (uint32(idx) + 1'u32)
+
 template pluginApis*() =
   {.pragma: state, codegenDecl: "$# $# __attribute__((used, section(\"__DATA,__state\")))".}
 

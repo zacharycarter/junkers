@@ -1,4 +1,31 @@
-import ../lib/sokol, api, internal
+import ../lib/sokol, api, internal, hashes
+
+type
+  GfxStageState = distinct int32
+
+  PGfxStage = object
+    name: string
+    nameHash: uint32
+    state: GfxStageState
+    parent: GfxStage
+    child: GfxStage
+    next: GfxStage
+    prev: GfxStage
+    order: uint16
+    enabled: bool
+    singleEnabled: bool
+
+  PGfx = object
+    stages: seq[PGfxStage]
+
+const
+  gssNone = GfxStageState(0)
+  gssSubmitting = GfxStageState(1)
+  gssDone = GfxStageState(2)
+  gssCount = GfxStageState(3)
+
+var
+  gGfx: PGfx
 
 proc init*(width, height: int32) =
   var sgDesc = sg_desc(
@@ -17,7 +44,17 @@ proc shutdown*() =
   sg_shutdown()
 
 proc stageRegister(name: cstring, parentStage: GfxStage): GfxStage {.cdecl.} =
-  echo "registering stage"
+  var pStage = PGfxStage(
+    name: $name,
+    parent: parentStage,
+    enabled: true,
+    singleEnabled: true
+  )
+  pStage.nameHash = hashFNV32Str(pStage.name)
+
+  result = GfxStage(id: (toId(len(gGfx.stages))))
+
+  add(gGfx.stages, pStage)
 
 gfxAPI = APIGfx(
   stageRegister: stageRegister

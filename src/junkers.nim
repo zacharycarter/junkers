@@ -8,6 +8,7 @@ var
 
 proc init() =
   gStage = gfx.stageRegister("main", GfxStage())
+  echo gStage
   discard
 
 pluginDeclMain(junkers, plugin, e):
