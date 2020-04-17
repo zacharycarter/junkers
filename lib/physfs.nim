@@ -1,5 +1,4 @@
-import os,
-       nimterop/[cimport, paths]
+import nimterop/[cimport, os, paths]
 
 const
   baseDir = currentSourcePath.parentDir()

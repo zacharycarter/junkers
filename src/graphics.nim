@@ -1,4 +1,4 @@
-import ../lib/sokol
+import ../lib/sokol, api, internal
 
 proc init*(width, height: int32) =
   var sgDesc = sg_desc(
@@ -15,3 +15,10 @@ proc init*(width, height: int32) =
 
 proc shutdown*() =
   sg_shutdown()
+
+proc stageRegister(name: cstring, parentStage: GfxStage): GfxStage {.cdecl.} =
+  echo "registering stage"
+
+gfxAPI = APIGfx(
+  stageRegister: stageRegister
+)

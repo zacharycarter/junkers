@@ -4,3 +4,6 @@
 [submodule "tools/glslcc"]
 	path = tools/glslcc
 	url = https://github.com/septag/glslcc.git
+[submodule "lib/cr"]
+	path = lib/cr
+	url = git@github.com:zacharycarter/cr.git
