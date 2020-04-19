@@ -8,7 +8,6 @@ var
 
 proc init() =
   gStage = gfx.stageRegister("main", GfxStage())
-  echo gStage
   discard
 
 pluginDeclMain(junkers, plugin, e):
@@ -18,12 +17,11 @@ pluginDeclMain(junkers, plugin, e):
       gfx = cast[ptr ApiGfx](plugin.api.getApi(atGfx, 0))
 
       init()
-    echo plugin.iteration
   else:
     discard
 
   result = 2
 
-proc configureGame(conf: var Config; params: openArray[string]) {.exportc,
+proc configureGame(conf: var Config) {.exportc,
     cdecl, dynlib.} =
   conf.appTitle = "Junkers"

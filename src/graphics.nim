@@ -19,6 +19,10 @@ type
     stages: seq[PGfxStage]
 
 const
+  stageOrderDepthBits = 6
+  stageOrderDepthMask = 0xfc00
+  stageOrderIdMask = 0x03ff
+  
   gssNone = GfxStageState(0)
   gssSubmitting = GfxStageState(1)
   gssDone = GfxStageState(2)
@@ -27,23 +31,26 @@ const
 var
   gGfx: PGfx
 
-proc init*(width, height: int32) =
-  var sgDesc = sg_desc(
-    gl_force_gles2: sapp_gles2(),
-    mtl_device: sapp_metal_get_device(),
-    mtl_renderpass_descriptor_cb: sapp_metal_get_renderpass_descriptor,
-    mtl_drawable_cb: sapp_metal_get_drawable,
-    d3d11_device: sapp_d3d11_get_device(),
-    d3d11_device_context: sapp_d3d11_get_device_context(),
-    d3d11_render_target_view_cb: sapp_d3d11_get_render_target_view,
-    d3d11_depth_stencil_view_cb: sapp_d3d11_get_depth_stencil_view,
-  )
-  sg_setup(addr sgDesc)
+proc gfxInit*(desc: var sg_desc): bool =
+  sg_setup(addr desc)
+  result = true
 
 proc shutdown*() =
   sg_shutdown()
 
-proc stageRegister(name: cstring, parentStage: GfxStage): GfxStage {.cdecl.} =
+proc stageAddChild(parent, child: GfxStage) {.inline.} =
+  var
+    pParent = addr(gGfx.stages[toIndex(parent.id)])
+    pChild = addr(gGfx.stages[toIndex(child.id)])
+
+  if pParent.child.id != 0:
+    var firstChild = addr(gGfx.stages[toIndex(pParent.child.id)])
+    firstChild.prev = child
+    pChild.next = pParent.child
+
+  pParent.child = child
+
+proc stageRegister(name: cstring; parentStage: GfxStage): GfxStage {.cdecl.} =
   var pStage = PGfxStage(
     name: $name,
     parent: parentStage,
@@ -53,6 +60,19 @@ proc stageRegister(name: cstring, parentStage: GfxStage): GfxStage {.cdecl.} =
   pStage.nameHash = hashFNV32Str(pStage.name)
 
   result = GfxStage(id: (toId(len(gGfx.stages))))
+
+  if parentStage.id != 0:
+    stageAddChild(parentStage, result)
+
+  var depth = 0'u16
+  if parentStage.id != 0:
+    let parentDepth =
+      (gGfx.stages[toIndex(parentStage.id)].order shr stageOrderDepthBits) and
+        stageOrderDepthMask
+    depth = parentDepth + 1
+
+  pStage.order = ((depth shl stageOrderDepthBits) and stageOrderDepthMask) or
+    uint16(toIndex(result.id) and stageOrderIdMask)
 
   add(gGfx.stages, pStage)
 

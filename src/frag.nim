@@ -1,4 +1,4 @@
-import ../lib/sokol, dynlib, globals, graphics, linalg, os, plugin, api
+import ../lib/sokol, dynlib, globals, graphics, linalg, os, plugin, api, core
 
 const
   msaaSamples = 4'i32
@@ -6,7 +6,7 @@ const
   height = 540'i32
 
 type
-  ConfigureGameCb = proc(conf: var Config; params: openArray[string]) {.cdecl.}
+  ConfigureGameCb = proc(conf: var Config) {.cdecl.}
 
   App = object
     conf: Config
@@ -32,7 +32,21 @@ template appSaveConfigStr(cacheStr, str) =
   else:
     str = addr cacheStr[0]
 
+proc appInitGfxDesc(desc: var sg_desc) =
+  desc.gl_force_gles2 = sapp_gles2()
+  desc.mtl_device = sapp_metal_get_device()
+  desc.mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor
+  desc.mtl_drawable_cb = sapp_metal_get_drawable
+  desc.d3d11_device = sapp_d3d11_get_device()
+  desc.d3d11_device_context = sapp_d3d11_get_device_context()
+  desc.d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view
+  desc.d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
+
 proc appInit() {.cdecl.} =
+  if not coreInit(gApp.conf, appInitGfxDesc):
+    echo "failed initializing core"
+    quit(QuitFailure)
+
   if not pluginLoadAbs("junkers.dylib", true):
     echo "failed loading game plugin"
     quit(QuitFailure)
@@ -43,7 +57,6 @@ proc appInit() {.cdecl.} =
 
   plugin.init()
   # asset.init()
-  graphics.init(width, height)
 
   # cube vertex buffer
   var vertices = [
@@ -218,8 +231,10 @@ when isMainModule:
 
   var defaultTitle: array[64, char]
 
-  var conf: Config
-  configureGameFn(conf, commandLineParams())
+  var conf = Config(
+    jobNumThreads: -1,
+  )
+  configureGameFn(conf)
 
   appSaveConfigStr(defaultTitle, conf.appTitle)
 

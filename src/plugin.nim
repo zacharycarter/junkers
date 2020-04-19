@@ -57,8 +57,6 @@ proc pluginInitPlugins*(): bool =
 proc pluginLoadAbs*(filepath: string; entry: bool): bool =
   var item: PluginItem
 
-  echo pluginAPI
-  
   item.p.userData = addr pluginAPI
 
   item.filepath = filepath
@@ -71,7 +69,7 @@ proc pluginLoadAbs*(filepath: string; entry: bool): bool =
 
 proc init*() =
   pluginCtx.userData = addr pluginAPI
-  echo pluginOpen(pluginCtx, "./junkers.dylib")
+  discard pluginOpen(pluginCtx, "./junkers.dylib")
 
 proc update*() =
   discard pluginUpdate(pluginCtx)

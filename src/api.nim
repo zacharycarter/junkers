@@ -6,6 +6,8 @@ type
     cachePath*: cstring
     plugins*: ptr UncheckedArray[cstring]
 
+    jobNumThreads*: int32
+
   APIType* = distinct int32
 
   PluginEvent = distinct int32
@@ -56,6 +58,9 @@ const
 
 template toId*(idx: int): untyped =
   (uint32(idx) + 1'u32)
+
+template toIndex*(id: uint32): untyped =
+  (int(id) - 1)
 
 template pluginApis*() =
   {.pragma: state, codegenDecl: "$# $# __attribute__((used, section(\"__DATA,__state\")))".}

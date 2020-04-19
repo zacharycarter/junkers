@@ -1,5 +1,5 @@
 import api
 
 var
-  gfxAPI* {.exportc.}: APIGfx
-  pluginAPI* {.exportc.}: APIPlugin
+  gfxApi* {.exportc.}: ApiGfx
+  pluginApi* {.exportc.}: ApiPlugin
