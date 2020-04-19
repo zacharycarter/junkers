@@ -1,0 +1,2 @@
+cc -DBOOST_CONTEXT_EXPORT="" -I./asm -o ontop_combined_all_macho_gas.S.o -c asm/ontop_combined_all_macho_gas.S
+clang++ -c --std=c++11 lib/cr.cpp -o lib/cr.o
