@@ -19,12 +19,6 @@ type
 
 const defaultStackSize = 131072 # 120kb
 
-template `+`*[T](p: ptr T, off: int): ptr T =
-  cast[ptr type(p[])](cast[ByteAddress](p) +% off * sizeof(p[]))
-
-template `-`*[T](p: ptr T, off: int): ptr T =
-  cast[ptr type(p[])](cast[ByteAddress](p) -% off * sizeof(p[]))
-
 proc cb(transfer: FiberTransfer) {.cdecl.} =
   echo transfer
 

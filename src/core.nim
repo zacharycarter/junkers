@@ -18,6 +18,8 @@ proc coreInit*(conf: Config; appInitGfxDesc: proc(desc: var sg_desc)): bool =
 
   var jobContextDesc = JobContextDesc(
     numThreads: numWorkerThreads,
+    maxFibers: conf.jobMaxFibers,
+    fiberStackSize: conf.jobStackSize * 1024,
   )
   gCore.jobs = jobCreateContext(jobContextDesc)
 

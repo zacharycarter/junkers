@@ -7,6 +7,8 @@ type
     plugins*: ptr UncheckedArray[cstring]
 
     jobNumThreads*: int32
+    jobMaxFibers*: int32
+    jobStackSize*: int32
 
   APIType* = distinct int32
 

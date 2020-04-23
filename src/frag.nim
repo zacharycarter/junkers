@@ -233,6 +233,8 @@ when isMainModule:
 
   var conf = Config(
     jobNumThreads: -1,
+    jobMaxFibers: 64,
+    jobStackSize: 1024,
   )
   configureGameFn(conf)
 
