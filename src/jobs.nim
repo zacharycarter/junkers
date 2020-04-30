@@ -99,7 +99,7 @@ proc jobCreateTData(tid: uint32; idx: int32; mainThread: bool): JobThreadData =
   result.tags = 0xffffffff'u32
   result.mainThread = mainThread
 
-  discard fiberStackInit(result.selectorStack, int(minStackSz()))
+  discard fiberStackInit(result.selectorStack, minStackSz())
 
 proc jobDestroyTData(tdata: JobThreadData) =
   fiberStackRelease(tdata.selectorStack)
@@ -123,8 +123,8 @@ proc jobThreadFn(userData: tuple[a, b: pointer]) {.thread.} =
 
   tlsSet(ctx.threadTls, cast[pointer](tData))
 
-  let fiber = fiberCreate(tData.selectorStack, jobSelectorFn)
-  discard fiberSwitch(fiber, cast[pointer](ctx))
+  # let fiber = fiberCreate(tData.selectorStack, jobSelectorFn)
+  # discard fiberSwitch(fiber, cast[pointer](ctx))
 
   tlsSet(ctx.threadTls, nil)
 

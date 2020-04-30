@@ -54,13 +54,13 @@ proc c_memmove*(dst, src: pointer; size: csize_t):pointer {.
 proc c_memset*(dst: pointer; src: int32; n: uint): pointer {.
   importc: "memset", header: "<string.h>", discardable.}
 
-proc pageSize*(): int =
-  result = sysconf(SC_PAGESIZE)
+proc pageSize*(): csize_t =
+  result = csize_t(sysconf(SC_PAGESIZE))
 
-proc alignPageSize*(size: int): int =
+proc alignPageSize*(size: csize_t): csize_t =
   let
     pageSz = pageSize()
-    pageCnt = (size + pageSz - 1) div pageSz
+    pageCnt = (size + pageSz - csize_t(1)) div pageSz
 
   result = pageCnt * pageSz
 
@@ -69,10 +69,13 @@ proc pthread_mach_thread_np(t: Pthread): mach_port_t {.cdecl, importc, header:"p
 proc threadTid*(): uint32 =
   result = uint32(cast[mach_port_t](pthread_mach_thread_np(pthread_self())))
 
-proc minStackSz*(): uint =
+proc minStackSize*(): int =
   result = 32768 # 32kb
 
-
+proc getMaxSize*(): int =
+  var limit: RLimit
+  discard getrlimit(3, limit)
+  return limit.rlim_max
 proc tlsCreate*(): Tls =
   var key: Pthread_key
   discard pthread_key_create(addr key, nil)
@@ -80,7 +83,8 @@ proc tlsCreate*(): Tls =
 
 proc tlsSet*(tls: Tls; data: pointer) =
   let key = cast[Pthread_key](cast[int](tls))
-  discard pthread_setspecific(key, data)
+  let r = pthread_setspecific(key, data)
+  assert(r == 0, "failed setting thread local storage")
 
 proc tlsGet*(tls: Tls): pointer =
   let key = cast[Pthread_key](cast[int](tls))
@@ -101,11 +105,19 @@ proc semaphoreBlockUntil*(cv: var Semaphore) =
   dec cv.counter
   release(cv.L)
 
-proc semaphoreSignal(cv: var Semaphore) =
+proc semaphoreSignal*(cv: var Semaphore) =
   acquire(cv.L)
   inc cv.counter
   release(cv.L)
   signal(cv.c)
+
+proc semaphoreSignal*(cv: var Semaphore; count: int) =
+  acquire(cv.L)
+  cv.counter += count
+  release(cv.L)
+  for i in 0 ..< count:
+    signal(cv.c)
+  
 
 proc syncLockTestAndSet(a: ptr int32; b: int32): int32 {.cdecl, importc:"__sync_lock_test_and_set", header:"<sys/time.h>".}
 proc absoluteTime(): uint64 {.cdecl, importc:"mach_absolute_time", header: "<sys/time.h>".}
@@ -113,7 +125,7 @@ proc absoluteTime(): uint64 {.cdecl, importc:"mach_absolute_time", header: "<sys
 proc cycleClock(): uint64 {.inline.} =
   result = absoluteTime()
 
-proc yieldCpu() {.inline.} =
+proc yieldCpu*() {.inline.} =
   {.emit: """asm volatile("pause");""".}
   
 proc threadYield() =
